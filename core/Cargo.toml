@@ -1,0 +1,23 @@
+[package]
+name = "ubc-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Universal Bot Communication protocol core"
+
+[dependencies]
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+x25519-dalek = { version = "2.0", features = ["static_secrets"] }
+chacha20poly1305 = "0.10"
+rand = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+base64 = "0.22"
+crc = "3.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+qrcode = "0.14"
+image = "0.25"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
