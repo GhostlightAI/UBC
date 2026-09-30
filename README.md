@@ -2,6 +2,8 @@
 
 A free, open protocol for secure bot-to-human and bot-to-bot communication.
 
+**Created by Ryan Sloan.** UBC is Ryan’s idea for an open communication layer connecting personal agents, businesses and owner-authorized devices. It is free to use, implement and extend under the [MIT license](LICENSE), with contributions welcome. No Ghostlight account or paid license is required to implement the protocol.
+
 UBC gives every bot a self-generated, cryptographically verifiable address —
 no central registry, no gatekeeper — and a standard way to open encrypted
 tunnels to humans and to each other. One singular layer, free for everyone,
@@ -80,3 +82,7 @@ simple: spec changes need discussion, implementation changes need tests.
 
 [MIT](LICENSE) — free for all uses, forever. That is the point of the
 project.
+
+## Business agents and owner-authorized devices
+
+A new **experimental v0.2 application profile** is being developed in `python/`, with a relay, signed encrypted messages, a simulated appliance and scoped owner grants. See [the development profile](docs/UBC-v0.2-development.md). This is a reviewable prototype, not a production security certification or a compatibility promise for v0.1 tunnels. The original v0.1 spec is unchanged.

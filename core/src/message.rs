@@ -1,9 +1,9 @@
 //! UBC message envelope: signed, end-to-end encrypted frames.
 
 use crate::crypto::SessionKey;
-use crate::identity::Identity;
+use crate::identity::{Address, Identity};
 use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
-use ed25519_dalek::{Signature, VerifyingKey, Verifier};
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -40,7 +40,14 @@ impl Message {
     }
 
     /// Bytes that get signed: everything but the signature itself.
-    fn signing_bytes(from: &str, to: &str, tunnel_id: &str, seq: u64, payload: &str, ts: u64) -> Vec<u8> {
+    fn signing_bytes(
+        from: &str,
+        to: &str,
+        tunnel_id: &str,
+        seq: u64,
+        payload: &str,
+        ts: u64,
+    ) -> Vec<u8> {
         format!("{from}|{to}|{tunnel_id}|{seq}|{payload}|{ts}").into_bytes()
     }
 
@@ -54,13 +61,13 @@ impl Message {
         plaintext: &[u8],
         key: &SessionKey,
     ) -> Result<Self, MessageError> {
-        let sealed = key
-            .seal(plaintext)
-            .map_err(|_| MessageError::Crypto)?;
+        let sealed = key.seal(plaintext).map_err(|_| MessageError::Crypto)?;
         let payload = B64.encode(sealed);
         let ts = Self::now();
         let from = identity.address().as_str().to_string();
-        let sig = identity.sign(&Self::signing_bytes(&from, to, tunnel_id, seq, &payload, ts));
+        let sig = identity.sign(&Self::signing_bytes(
+            &from, to, tunnel_id, seq, &payload, ts,
+        ));
         Ok(Message {
             from,
             to: to.to_string(),
@@ -75,12 +82,20 @@ impl Message {
 
     /// Verify the sender's signature against their claimed address's key.
     pub fn verify(&self, sender_public: &VerifyingKey) -> Result<(), MessageError> {
+        if Address::from_public_key(sender_public).as_str() != self.from {
+            return Err(MessageError::BadSignature);
+        }
         let sig_bytes = B64
             .decode(&self.signature)
             .map_err(|_| MessageError::BadEncoding)?;
         let sig = Signature::from_slice(&sig_bytes).map_err(|_| MessageError::BadSignature)?;
         let bytes = Self::signing_bytes(
-            &self.from, &self.to, &self.tunnel_id, self.seq, &self.payload, self.timestamp,
+            &self.from,
+            &self.to,
+            &self.tunnel_id,
+            self.seq,
+            &self.payload,
+            self.timestamp,
         );
         sender_public
             .verify(&bytes, &sig)
@@ -89,7 +104,9 @@ impl Message {
 
     /// Decrypt the payload (call `verify` first).
     pub fn open(&self, key: &SessionKey) -> Result<Vec<u8>, MessageError> {
-        let sealed = B64.decode(&self.payload).map_err(|_| MessageError::BadEncoding)?;
+        let sealed = B64
+            .decode(&self.payload)
+            .map_err(|_| MessageError::BadEncoding)?;
         key.open(&sealed).map_err(|_| MessageError::Crypto)
     }
 }
@@ -140,6 +157,27 @@ mod tests {
         let mut forged = msg.clone();
         forged.payload = B64.encode(b"garbage-garbage");
         assert!(forged.verify(alice_id.public_key()).is_err());
+    }
+
+    #[test]
+    fn test_signature_cannot_claim_another_address() {
+        let alice = Identity::generate();
+        let attacker = Identity::generate();
+        let from = alice.address().as_str().to_string();
+        let signature = attacker.sign(&Message::signing_bytes(
+            &from, "receiver", "tunnel", 1, "payload", 1,
+        ));
+        let forged = Message {
+            from,
+            to: "receiver".into(),
+            tunnel_id: "tunnel".into(),
+            seq: 1,
+            msg_type: MessageType::Control,
+            payload: "payload".into(),
+            timestamp: 1,
+            signature: B64.encode(signature.to_bytes()),
+        };
+        assert!(forged.verify(attacker.public_key()).is_err());
     }
 
     #[test]

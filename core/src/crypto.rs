@@ -4,8 +4,8 @@ use chacha20poly1305::{
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng},
     ChaCha20Poly1305, Key, Nonce,
 };
-use x25519_dalek::{PublicKey as X25519Public, StaticSecret};
 use thiserror::Error;
+use x25519_dalek::{PublicKey as X25519Public, StaticSecret};
 
 /// An ephemeral X25519 keypair for one session (forward secrecy: never reused).
 pub struct SessionKeypair {
@@ -98,7 +98,6 @@ mod tests {
         let bob = SessionKeypair::generate();
         let eve = SessionKeypair::generate();
 
-        let alice_pub = alice.public;
         let bob_pub = bob.public;
         let eve_pub = eve.public;
 

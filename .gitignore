@@ -1,1 +1,12 @@
-target/
+core/target/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+work/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.key
+.env

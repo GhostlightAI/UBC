@@ -2,16 +2,16 @@
 //!
 //! Identity, addressing, cryptography, and tunnel management.
 
-pub mod identity;
-pub mod tunnel;
 pub mod crypto;
+pub mod identity;
 pub mod message;
 pub mod qr;
+pub mod tunnel;
 
-pub use identity::{Identity, Address};
-pub use tunnel::{Tunnel, TunnelConfig, TunnelType, Permissions, Privacy};
+pub use identity::{Address, Identity};
 pub use message::{Message, MessageType};
-pub use qr::{QrPayload, generate_qr, parse_qr};
+pub use qr::{generate_qr, parse_qr, QrPayload};
+pub use tunnel::{Permissions, Privacy, Tunnel, TunnelConfig, TunnelType};
 
 /// UBC protocol version
 pub const VERSION: &str = "0.1";

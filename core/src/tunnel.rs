@@ -190,7 +190,11 @@ mod tests {
 
     #[test]
     fn test_type_roundtrip() {
-        for t in [TunnelType::Ephemeral, TunnelType::Session, TunnelType::Persistent] {
+        for t in [
+            TunnelType::Ephemeral,
+            TunnelType::Session,
+            TunnelType::Persistent,
+        ] {
             assert_eq!(t.to_string().parse::<TunnelType>().unwrap(), t);
         }
     }

@@ -3,6 +3,8 @@ name = "ubc-core"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+authors = ["Ryan Sloan"]
+repository = "https://github.com/GhostlightAI/UBC"
 description = "Universal Bot Communication protocol core"
 
 [dependencies]

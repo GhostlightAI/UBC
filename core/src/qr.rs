@@ -6,7 +6,7 @@
 use crate::identity::{Address, Identity};
 use crate::tunnel::TunnelType;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD as B64URL, Engine as _};
-use ed25519_dalek::{Signature, VerifyingKey, Verifier};
+use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
@@ -20,7 +20,12 @@ pub struct QrPayload {
 
 impl QrPayload {
     /// Signed pairing payload for `identity`. Signs addr|type|relay|exp.
-    pub fn create(identity: &Identity, tunnel_type: TunnelType, relay: Option<&str>, expiry: Option<u64>) -> Self {
+    pub fn create(
+        identity: &Identity,
+        tunnel_type: TunnelType,
+        relay: Option<&str>,
+        expiry: Option<u64>,
+    ) -> Self {
         let address = identity.address().as_str().to_string();
         let signing = Self::signing_string(&address, tunnel_type, relay, expiry);
         let sig = identity.sign(signing.as_bytes());
@@ -33,7 +38,12 @@ impl QrPayload {
         }
     }
 
-    fn signing_string(address: &str, t: TunnelType, relay: Option<&str>, exp: Option<u64>) -> String {
+    fn signing_string(
+        address: &str,
+        t: TunnelType,
+        relay: Option<&str>,
+        exp: Option<u64>,
+    ) -> String {
         format!(
             "{}|{}|{}|{}",
             address,
@@ -89,7 +99,9 @@ impl QrPayload {
     /// Caller must obtain the pubkey for `address` out-of-band (first-contact
     /// trust, directory, or a prior tunnel).
     pub fn verify(&self, public_key: &VerifyingKey) -> Result<(), QrError> {
-        let sig_bytes = B64URL.decode(&self.signature).map_err(|_| QrError::BadSignature)?;
+        let sig_bytes = B64URL
+            .decode(&self.signature)
+            .map_err(|_| QrError::BadSignature)?;
         let sig = Signature::from_slice(&sig_bytes).map_err(|_| QrError::BadSignature)?;
         let signing = Self::signing_string(
             &self.address,
@@ -118,9 +130,11 @@ impl QrPayload {
 
 /// Render a `ubc:` URI as a PNG QR code (for display/sharing).
 pub fn generate_qr(payload: &QrPayload) -> Result<Vec<u8>, QrError> {
-    let code = qrcode::QrCode::new(payload.to_uri().as_bytes())
-        .map_err(|_| QrError::Encode)?;
-    let image = code.render::<image::Luma<u8>>().min_dimensions(320, 320).build();
+    let code = qrcode::QrCode::new(payload.to_uri().as_bytes()).map_err(|_| QrError::Encode)?;
+    let image = code
+        .render::<image::Luma<u8>>()
+        .min_dimensions(320, 320)
+        .build();
     let mut png = Vec::new();
     let encoder = image::codecs::png::PngEncoder::new(&mut png);
     use image::ImageEncoder;
@@ -193,7 +207,12 @@ mod tests {
     #[test]
     fn test_qr_roundtrip() {
         let id = Identity::generate();
-        let payload = QrPayload::create(&id, TunnelType::Session, Some("wss://relay.example.com"), Some(1999999999));
+        let payload = QrPayload::create(
+            &id,
+            TunnelType::Session,
+            Some("wss://relay.example.com"),
+            Some(1999999999),
+        );
         let uri = payload.to_uri();
         let parsed = QrPayload::parse(&uri).unwrap();
 
